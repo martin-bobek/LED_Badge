@@ -4,6 +4,13 @@
 #include <avr/sleep.h>
 
 #define MSK(BIT) (uint8_t)(1u << BIT)
+#define COL_MSK(R1,R2,R3,R4,R5) ((R1 ? 0 : MSK(0)) | \
+								 (R2 ? 0 : MSK(1)) | \
+								 (R3 ? 0 : MSK(2)) | \
+								 (R4 ? 0 : MSK(3)) | \
+								 (R5 ? 0 : MSK(4)))
+
+const uint8_t columns[5] = { COL_MSK(1,0,0,0,0), COL_MSK(1,0,0,0,0), COL_MSK(1,1,1,1,1), COL_MSK(1,0,0,0,0), COL_MSK(1,0,0,0,0) };
 
 volatile uint8_t G_u8SysTick;
 
@@ -13,20 +20,28 @@ static inline void SystemSleep();
 __attribute__ ((OS_main)) int main(void) {
 	SystemInit();
 
-	uint16_t counter = 0;
+	uint16_t column = 0;
+	uint8_t portB_temp = MSK(0), column_temp = columns[0];
 	while (1) {
-		counter++;
-		if (counter == 500) {
-			counter = 0;
-			PIND = MSK(1);
+		PORTB = 0;
+		PORTD = column_temp;
+		PORTB = portB_temp;
+
+		column++;
+		if (column == 5) {
+			column = 0;
+			portB_temp = MSK(0);
 		}
+		else {
+			portB_temp = PORTB << 1;
+		}
+		column_temp = columns[column];
 
 		SystemSleep();
 	}
 }
 
 static inline void SystemInit() {
-	PORTB = MSK(1);
 	PORTD = MSK(4) | MSK(3) | MSK(2) | MSK(1) | MSK(0);
 	DDRA = MSK(1) | MSK(0);
 	DDRB = MSK(7) | MSK(6) | MSK(5) | MSK(4) | MSK(3) | MSK(2) | MSK(1) | MSK(0);
