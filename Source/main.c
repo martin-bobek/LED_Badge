@@ -10,7 +10,12 @@
 								 (R4 ? 0 : MSK(3)) | \
 								 (R5 ? 0 : MSK(4)))
 
-const uint8_t columns[5] = { COL_MSK(1,0,0,0,0), COL_MSK(1,0,0,0,0), COL_MSK(1,1,1,1,1), COL_MSK(1,0,0,0,0), COL_MSK(1,0,0,0,0) };
+const uint8_t columns[6][5] = {{ COL_MSK(0,0,1,0,0), COL_MSK(0,0,1,0,0), COL_MSK(0,0,1,0,0), COL_MSK(0,0,1,0,0), COL_MSK(1,1,1,1,1) },
+		                       { COL_MSK(0,1,0,1,0), COL_MSK(1,0,1,0,1), COL_MSK(1,0,1,0,1), COL_MSK(1,0,0,0,1), COL_MSK(1,0,0,0,1) },
+							   { COL_MSK(0,0,1,0,0), COL_MSK(0,1,0,1,0), COL_MSK(1,0,0,0,1), COL_MSK(1,0,1,0,1), COL_MSK(0,1,0,1,0) },
+                               { COL_MSK(1,0,0,0,1), COL_MSK(1,0,0,0,1), COL_MSK(1,0,1,0,1), COL_MSK(1,1,0,1,1), COL_MSK(1,0,0,0,1) },
+                               { COL_MSK(0,0,1,1,0), COL_MSK(0,1,0,1,0), COL_MSK(0,0,1,1,0), COL_MSK(0,1,0,1,0), COL_MSK(0,0,1,1,0) },
+							   { COL_MSK(0,0,1,0,0), COL_MSK(0,1,0,1,0), COL_MSK(1,0,0,0,1), COL_MSK(1,0,1,0,1), COL_MSK(0,1,0,1,0) }};
 
 volatile uint8_t G_u8SysTick;
 
@@ -20,8 +25,9 @@ static inline void SystemSleep();
 __attribute__ ((OS_main)) int main(void) {
 	SystemInit();
 
-	uint16_t column = 0;
-	uint8_t portB_temp = MSK(0), column_temp = columns[0];
+	uint8_t timer = 0;
+	uint8_t image = 0, column = 0;
+	uint8_t portB_temp = MSK(0), column_temp = columns[0][0];
 	while (1) {
 		PORTB = 0;
 		PORTD = column_temp;
@@ -31,11 +37,19 @@ __attribute__ ((OS_main)) int main(void) {
 		if (column == 5) {
 			column = 0;
 			portB_temp = MSK(0);
+			timer++;
+			if (timer == 200) {
+				timer = 0;
+				image++;
+				if (image == 6) {
+					image = 0;
+				}
+			}
 		}
 		else {
 			portB_temp = PORTB << 1;
 		}
-		column_temp = columns[column];
+		column_temp = columns[image][column];
 
 		SystemSleep();
 	}
